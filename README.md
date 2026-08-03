@@ -20,14 +20,10 @@ To upgrade later, re-run the script and then `sudo reboot`.
 
 ## What it does
 
-* Downloads and SHA256-verifies the current stable release for your
-  architecture.
+* Downloads the current stable release for your architecture.
 * Builds `tailscale.tcz` and sets it to load at boot.
 * Starts `tailscaled` when the extension loads.
 * Keeps the node identity on the pCP data partition, so it survives reboots.
-
-The daemon runs `--tun=tailscale0`, so the tunnel is a real interface and the
-node can act as a subnet router or exit node.
 
 ## Migrating from an earlier setup
 
