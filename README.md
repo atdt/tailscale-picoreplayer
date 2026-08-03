@@ -36,8 +36,8 @@ needed for any of it to persist.
 
 ## Why this approach
 
-Compared with the original recipe in the [forum thread][thread] and the
-maintenance script posted later in it:
+Compared with the original recipe in the [forum thread][thread] and mll's
+`install_update_Tailscale.sh` [posted later in it][mll]:
 
 * **State never goes inside the package.** The recipe builds
   `var/lib/tailscale` into the extension, which leaves `tailscaled.state` a
@@ -60,7 +60,7 @@ maintenance script posted later in it:
   remember.
 
 Verifying the checksum and keeping state out of the backup are both good ideas
-taken from that later script.
+taken from mll's script.
 
 ## Kernel networking
 
@@ -92,3 +92,4 @@ and any `tailscaled` lines in `/opt/bootlocal.sh`. Both live in the pCP backup,
 so run `pcp bu` afterwards.
 
 [thread]: https://forums.lyrion.org/forum/user-forums/linux-unix/1722251-tailscale-on-picoreplayer
+[mll]: https://forums.lyrion.org/forum/user-forums/linux-unix/1722251-tailscale-on-picoreplayer/page4
