@@ -68,8 +68,7 @@ install -m 0755 "$INITD" pkg/usr/local/etc/init.d/tailscaled
 wget -q -O pkg/usr/local/share/tailscale/LICENSE \
     "https://raw.githubusercontent.com/tailscale/tailscale/v$VERSION/LICENSE"
 
-# tce-load runs this as root when the extension mounts, so the package starts
-# itself without touching bootlocal.sh or pCP's user commands.
+# tce-load runs this as root when the extension mounts.
 cat > pkg/usr/local/tce.installed/tailscale <<'EOF'
 #!/bin/sh
 /usr/local/etc/init.d/tailscaled start
@@ -113,7 +112,6 @@ grep -qx 'tailscale.tcz' "$ONBOOT" || echo 'tailscale.tcz' >> "$ONBOOT"
 cd /
 rm -rf "$WORK"
 
-# All of the above lives on the data partition, so no pcp backup is needed.
 echo "Installed Tailscale $VERSION. Reboot to apply: sudo reboot"
 if ! sudo test -f "$STATEDIR/tailscaled.state"; then
     echo "No node identity yet. After the reboot, run: sudo tailscale up"
