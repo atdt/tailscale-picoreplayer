@@ -27,10 +27,7 @@ To upgrade later, re-run the script and then `sudo reboot`.
 * Keeps the node identity on the pCP data partition, so it survives reboots.
 
 The daemon runs `--tun=tailscale0`, so the tunnel is a real interface and the
-node can act as a subnet router or exit node. That needs netfilter modules
-pinned to the running kernel, so re-run the script after a pCP kernel update. If
-the pin ever breaks, the daemon falls back to userspace networking rather than
-failing to start.
+node can act as a subnet router or exit node.
 
 ## Migrating from an earlier setup
 

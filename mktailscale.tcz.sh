@@ -158,8 +158,9 @@ Current:        $(date +%Y/%m/%d) Built for kernel $KERNEL
 EOF
 
 # tailscaled programs netfilter over netlink, so it needs the kernel modules but
-# no iptables or iproute2 userland. These are tied to the running kernel.
-echo "ipv6-netfilter-$KERNEL.tcz" > "$TCEDIR/optional/tailscale.tcz.dep"
+# no iptables or iproute2 userland. tce-load expands KERNEL to the running
+# version at load time, so this keeps resolving across kernel updates.
+echo 'ipv6-netfilter-KERNEL.tcz' > "$TCEDIR/optional/tailscale.tcz.dep"
 tce-load -w "ipv6-netfilter-$KERNEL" >/dev/null
 
 ONBOOT=$TCEDIR/onboot.lst
