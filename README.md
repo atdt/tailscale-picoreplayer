@@ -44,11 +44,9 @@ Compared with the original recipe in the [forum thread][thread] and mll's
   read-only symlink into the squashfs: the daemon cannot persist changes, and
   the node's private key ends up in a file meant to be copied around.
 * **The package starts itself.** Both alternatives need something outside it —
-  pCP user commands, or lines appended to `bootlocal.sh`. On the pCP 9.x tested
-  here the latter never runs at all: `pcp_startup.sh` pipes into `tee`, the
-  daemons it spawns hold the pipe open, so the pipeline never returns and
-  everything below `#pCPstop------` is dead. `tce.installed` is the Tiny Core
-  hook meant for this.
+  pCP user commands, or lines appended to `bootlocal.sh`. `tce.installed` is the
+  Tiny Core hook meant for this, so there is no user-side configuration to get
+  wrong, and nothing to undo if you remove the extension.
 * **The netfilter dependency is declared.** Kernel mode needs modules that ship
   as a kernel-versioned extension; `.dep` loads it automatically, and the init
   script degrades to userspace if a kernel update ever breaks the pin.
