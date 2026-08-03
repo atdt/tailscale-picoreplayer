@@ -89,8 +89,8 @@ case "$1" in
     install -d -m 0700 "$STATEDIR"
     [ -e /var/lib/tailscale ] || ln -s "$STATEDIR" /var/lib/tailscale
 
-    # The netfilter modules are tied to the running kernel, so a pCP update can
-    # leave them unavailable. Degrade instead of failing to come up.
+    # The netfilter modules come from a separate extension that has to match the
+    # running kernel. Degrade to userspace rather than fail to come up.
     if modprobe tun 2>/dev/null && modprobe nf_tables 2>/dev/null; then
         TUN=tailscale0
         # tailscaled pulls in ipv6 itself, but too late for this sysctl.

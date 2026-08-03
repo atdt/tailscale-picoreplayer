@@ -24,6 +24,7 @@ To upgrade later, re-run the script and then `sudo reboot`.
 * Builds `tailscale.tcz` and sets it to load at boot.
 * Starts `tailscaled` when the extension loads.
 * Keeps the node identity on the pCP data partition, so it survives reboots.
+* Can act as a subnet router or exit node.
 
 ## Migrating from an earlier setup
 
