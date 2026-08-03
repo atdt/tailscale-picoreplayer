@@ -34,6 +34,34 @@ sudo tailscale up
 Everything the script writes lives on the data partition, so no pCP backup is
 needed for any of it to persist.
 
+## Why this approach
+
+Compared with the original recipe in the [forum thread][thread] and the
+maintenance script posted later in it:
+
+* **State never goes inside the package.** The recipe builds
+  `var/lib/tailscale` into the extension, which leaves `tailscaled.state` a
+  read-only symlink into the squashfs: the daemon cannot persist changes, and
+  the node's private key ends up in a file meant to be copied around.
+* **The package starts itself.** Both alternatives need something outside it —
+  pCP user commands, or lines appended to `bootlocal.sh`. On the pCP 9.x tested
+  here the latter never runs at all: `pcp_startup.sh` pipes into `tee`, the
+  daemons it spawns hold the pipe open, so the pipeline never returns and
+  everything below `#pCPstop------` is dead. `tce.installed` is the Tiny Core
+  hook meant for this.
+* **The netfilter dependency is declared.** Kernel mode needs modules that ship
+  as a kernel-versioned extension; `.dep` loads it automatically, and the init
+  script degrades to userspace if a kernel update ever breaks the pin.
+* **It follows piCore packaging conventions** — 4k blocks, `-no-xattrs`,
+  root-owned contents, a `/usr/local` prefix and the full sidecar set, which is
+  what the repo expects if the package is ever hosted there.
+* **It changes no configuration.** Nothing is written to `bootlocal.sh`,
+  `pcp.cfg` or the backup, so there is nothing to undo and no `pcp bu` to
+  remember.
+
+Verifying the checksum and keeping state out of the backup are both good ideas
+taken from that later script.
+
 ## Kernel networking
 
 The daemon runs `--tun=tailscale0` so the tunnel is a real interface and the
@@ -54,23 +82,13 @@ reports "Subnet routing is enabled, but IP forwarding is disabled".
 
 ## Migrating from the forum recipe
 
-If you previously followed the [forum
-thread](https://forums.lyrion.org/forum/user-forums/linux-unix/1722251-tailscale-on-picoreplayer),
-the build script copies your existing node identity out of `/var/lib/tailscale`
-the first time it runs, so you keep the same tailnet IP and do not have to
-re-authenticate. That recipe created the state directory *inside* the package,
-which left `tailscaled.state` as a read-only symlink into the squashfs and put
-the node's private key in a shareable file. The rebuilt package contains only
-the binaries and scripts.
+The build script copies an existing node identity out of `/var/lib/tailscale`
+the first time it runs, so you keep the same tailnet IP without
+re-authenticating.
 
-The extension now starts itself, so remove whatever used to start it or the
-daemon will run twice:
+The extension starts itself now, so remove whatever used to start it or the
+daemon will run twice: the pCP user commands under Tweaks &rarr; User commands,
+and any `tailscaled` lines in `/opt/bootlocal.sh`. Both live in the pCP backup,
+so run `pcp bu` afterwards.
 
-* pCP user commands — Tweaks &rarr; User commands in the web UI, blanking the
-  `tailscaled` and `modprobe tun` entries.
-* Any `tailscaled` lines added to `/opt/bootlocal.sh`. Note that anything below
-  the `#pCPstop------` marker never ran anyway: `pcp_startup.sh` pipes into
-  `tee`, the daemons it spawns hold the pipe open, and the pipeline never
-  returns.
-
-Both live in the pCP backup, so run `pcp bu` afterwards.
+[thread]: https://forums.lyrion.org/forum/user-forums/linux-unix/1722251-tailscale-on-picoreplayer
