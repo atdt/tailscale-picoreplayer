@@ -95,9 +95,6 @@ sudo delgroup tailscale
 pcp bu
 ```
 
-If you want the old identity gone from the device entirely, remove the rescue
-copy the migration leaves behind once you are satisfied the node still works:
-
-```sh
-sudo rm -rf /mnt/mmcblk0p2/tailscale_state.rescue
-```
+The migration copies the identity rather than moving it, so the original is left
+untouched under `/var/lib/tailscale` until the next reboot replaces it. Confirm
+the node still works before clearing out any older copies of your own.
