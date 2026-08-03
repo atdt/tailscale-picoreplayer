@@ -1,7 +1,7 @@
 # Tailscale for piCorePlayer
 
-Builds an up-to-date Tailscale `.tcz` extension on the device and installs it.
-Run it as `tc`, not with `sudo`.
+Packages and installs the current release of Tailscale as a piCore extension.
+Run it as `tc` on your piCorePlayer:
 
 ```sh
 ./mktailscale.tcz.sh
@@ -22,8 +22,7 @@ To upgrade later, re-run the script and then `sudo reboot`.
   architecture.
 * Builds `tailscale.tcz` and sets it to load at boot.
 * Starts `tailscaled` when the extension loads.
-* Keeps the node identity in `tailscale` on the pCP data partition, so it
-  survives a reboot whether or not you have run `pcp bu`.
+* Keeps the node identity on the pCP data partition, so it survives reboots.
 
 The daemon runs `--tun=tailscale0`, so the tunnel is a real interface and the
 node can act as a subnet router or exit node. That needs netfilter modules
