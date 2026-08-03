@@ -1,14 +1,9 @@
 #!/bin/sh
 # Build and install a Tailscale .tcz extension for piCorePlayer.
 # Re-run to upgrade. Run as tc: tce-load refuses to run as root.
-#
-#   ./mktailscale.tcz.sh && sudo reboot
 set -e
 
 [ "$(id -u)" != 0 ] || { echo "run as tc, not root" >&2; exit 1; }
-
-INITD=$(dirname "$0")/tailscaled
-[ -f "$INITD" ] || { echo "missing init script: $INITD" >&2; exit 1; }
 
 case "$(uname -m)" in
     aarch64)       ARCH=arm64 ;;
@@ -61,12 +56,73 @@ echo "$(cat "$TGZ.sha256")  $TGZ" | sha256sum -c -
 tar xzf "$TGZ"
 cp "tailscale_${VERSION}_${ARCH}/tailscale" \
    "tailscale_${VERSION}_${ARCH}/tailscaled" pkg/usr/local/bin/
-install -m 0755 "$INITD" pkg/usr/local/etc/init.d/tailscaled
 
 # BSD-3-Clause requires binary redistributions to carry the notice; the upstream
 # tarball has no license file. Pinned to the tag so it matches these binaries.
 wget -q -O pkg/usr/local/share/tailscale/LICENSE \
     "https://raw.githubusercontent.com/tailscale/tailscale/v$VERSION/LICENSE"
+
+cat > pkg/usr/local/etc/init.d/tailscaled <<'INIT'
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          tailscaled
+# Required-Start:    $local_fs $network $syslog
+# Required-Stop:     $local_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: tailscaled daemon
+# Description:       tailscaled daemon
+### END INIT INFO
+
+DAEMON=/usr/local/bin/tailscaled
+PIDFILE=/var/run/tailscaled.pid
+
+# State on the data partition, so the node identity survives a reboot whether or
+# not a pCP backup has been taken.
+STATEDIR=$(dirname "$(readlink -f /etc/sysconfig/tcedir)")/tailscale
+
+test -x $DAEMON || exit 0
+
+case "$1" in
+  start)
+    echo "Starting tailscaled"
+    install -d -m 0700 "$STATEDIR"
+    [ -e /var/lib/tailscale ] || ln -s "$STATEDIR" /var/lib/tailscale
+
+    # The netfilter modules are tied to the running kernel, so a pCP update can
+    # leave them unavailable. Degrade instead of failing to come up.
+    if modprobe tun 2>/dev/null && modprobe nf_tables 2>/dev/null; then
+        TUN=tailscale0
+        # tailscaled pulls in ipv6 itself, but too late for this sysctl.
+        modprobe ipv6 2>/dev/null
+        sysctl -w net.ipv4.ip_forward=1 >/dev/null
+        sysctl -w net.ipv6.conf.all.forwarding=1 >/dev/null
+    else
+        TUN=userspace-networking
+        echo "tun/netfilter unavailable, using userspace networking"
+    fi
+
+    start-stop-daemon --start --background --pidfile $PIDFILE --make-pidfile \
+        --startas $DAEMON -- \
+        --statedir="$STATEDIR" --tun=$TUN --no-logs-no-support
+    ;;
+  stop)
+    echo "Stopping tailscaled"
+    start-stop-daemon --stop --pidfile $PIDFILE --retry 10
+    ;;
+  restart)
+    "$0" stop
+    sleep 2
+    "$0" start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
+exit 0
+INIT
+chmod 0755 pkg/usr/local/etc/init.d/tailscaled
 
 # tce-load runs this as root when the extension mounts.
 cat > pkg/usr/local/tce.installed/tailscale <<'EOF'

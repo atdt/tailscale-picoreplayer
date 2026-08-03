@@ -4,6 +4,8 @@ Packages and installs the current release of Tailscale as a piCore extension.
 Run it as `tc` on your piCorePlayer:
 
 ```sh
+wget https://raw.githubusercontent.com/atdt/tailscale-picoreplayer/main/mktailscale.tcz.sh
+chmod +x mktailscale.tcz.sh
 ./mktailscale.tcz.sh
 ```
 
