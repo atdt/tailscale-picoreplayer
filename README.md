@@ -27,7 +27,7 @@ sudo tailscale up
 * Starts itself through `/usr/local/tce.installed/tailscale`, the standard Tiny
   Core hook that runs as root when the extension mounts. Nothing needs to be
   added to `bootlocal.sh` or to pCP's user commands.
-* Keeps state in `tailscale_state` on the pCP data partition, symlinked to
+* Keeps state in `tailscale` on the pCP data partition, symlinked to
   `/var/lib/tailscale`. `tailscaled` writes it directly, so the node identity
   survives a reboot whether or not you have run `pcp bu`.
 
@@ -82,11 +82,13 @@ via its own netfilter setup. The init script modprobes it before setting
 `net.ipv6.conf.all.forwarding`, which otherwise silently stays off and Tailscale
 reports "Subnet routing is enabled, but IP forwarding is disabled".
 
-## Migrating from the forum recipe
+## Migrating from an earlier setup
 
-The build script copies an existing node identity out of `/var/lib/tailscale`
-the first time it runs, so you keep the same tailnet IP without
-re-authenticating.
+The build script carries an existing node identity over on first run, from
+either `tailscale_state` on the data partition (where mll's script kept it) or
+`/var/lib/tailscale` (where the forum recipe did), so you keep the same tailnet
+IP without re-authenticating. It copies rather than moves, leaving the old
+directory alone.
 
 The extension starts itself now, so remove whatever used to start it or the
 daemon will run twice: the pCP user commands under Tweaks &rarr; User commands,

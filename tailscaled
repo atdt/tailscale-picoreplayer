@@ -14,7 +14,7 @@ PIDFILE=/var/run/tailscaled.pid
 
 # State on the data partition, so the node identity survives a reboot whether or
 # not a pCP backup has been taken.
-STATEDIR=$(dirname "$(readlink -f /etc/sysconfig/tcedir)")/tailscale_state
+STATEDIR=$(dirname "$(readlink -f /etc/sysconfig/tcedir)")/tailscale
 
 test -x $DAEMON || exit 0
 

@@ -18,18 +18,24 @@ case "$(uname -m)" in
 esac
 
 TCEDIR=$(readlink -f /etc/sysconfig/tcedir)
-STATEDIR=$(dirname "$TCEDIR")/tailscale_state
+P2=$(dirname "$TCEDIR")
+STATEDIR=$P2/tailscale
 KERNEL=$(uname -r)
 WORK=$TCEDIR/tailscale-build   # the partition root is root-owned; this is not
 
-# Earlier recipes kept state inside the .tcz, where tailscaled.state ends up a
-# read-only symlink into the squashfs. Copy it out before replacing the package,
-# or the node identity goes with it. Tested through sudo because as tc these
-# checks would come back false and overwrite good state.
-if ! sudo test -f "$STATEDIR/tailscaled.state" && sudo test -e /var/lib/tailscale/tailscaled.state; then
-    echo "Migrating existing node identity out of /var/lib/tailscale"
-    sudo install -d -m 0700 "$STATEDIR"
-    sudo cp -rL /var/lib/tailscale/. "$STATEDIR/"
+# Earlier layouts to carry an identity over from, live copy first: mll's
+# maintenance script used tailscale_state, and the forum recipe kept state
+# inside the .tcz, where tailscaled.state is a read-only symlink into the
+# squashfs that goes away with the old package. Tested through sudo because as
+# tc these checks come back false and would overwrite good state.
+if ! sudo test -f "$STATEDIR/tailscaled.state"; then
+    for old in "$P2/tailscale_state" /var/lib/tailscale; do
+        sudo test -e "$old/tailscaled.state" || continue
+        echo "Migrating existing node identity out of $old"
+        sudo install -d -m 0700 "$STATEDIR"
+        sudo cp -rL "$old/." "$STATEDIR/"
+        break
+    done
 fi
 
 # -l loads without adding to onboot.lst; this is only needed to build.
