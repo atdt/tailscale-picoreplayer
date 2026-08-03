@@ -36,43 +36,30 @@ needed for any of it to persist.
 
 ## Licensing
 
-Tailscale is BSD-3-Clause, whose second clause requires binary redistributions
-to reproduce the copyright notice and disclaimer. The official tarball ships no
-license file, so the build script fetches it from the matching release tag and
-installs it to `/usr/local/share/tailscale/LICENSE`. That matters if the package
-is ever shared rather than just built locally.
-
-The binaries statically link a large number of third-party Go packages. Run
-`tailscale licenses`, or see <https://tailscale.com/licenses/tailscale>.
+Tailscale is BSD-3-Clause, which requires binary redistributions to reproduce
+the copyright notice and disclaimer. The official tarball ships no license file,
+so the build script fetches it from the matching release tag and installs it to
+`/usr/local/share/tailscale/LICENSE`. That matters if the package is ever shared
+rather than just built locally. For the statically linked Go dependencies, run
+`tailscale licenses`.
 
 ## Kernel networking
 
 The daemon runs `--tun=tailscale0` so the tunnel is a real interface and the
-node can act as a subnet router or exit node. That needs netfilter, which on
-piCore lives in a kernel-versioned extension, so `tailscale.tcz.dep` pulls in:
-
-```
-ipv6-netfilter-<kernel>.tcz
-iptables.tcz
-iproute2.tcz
-```
+node can act as a subnet router or exit node. `tailscaled` programs netfilter
+over netlink, so it needs the kernel modules but no `iptables` or `iproute2`
+userland; `tailscale.tcz.dep` pulls in `ipv6-netfilter-<kernel>.tcz` alone.
 
 Because that dependency is pinned to the running kernel, a pCP update that
 changes the kernel will leave it unresolvable. The init script checks for `tun`
-and `ip_tables` at start and falls back to `--tun=userspace-networking` rather
+and `nf_tables` at start and falls back to `--tun=userspace-networking` rather
 than failing to come up, so an update degrades connectivity instead of removing
 it. Re-run the build script after a kernel update to repin the dependency.
 
-Two things that are easy to get wrong here:
-
-* `iptables` and `ip` install to `/usr/local/sbin`, which piCore leaves out of
-  the default `PATH`. `tailscaled` execs them, so the init script sets `PATH`
-  explicitly. Without it the daemon comes up with no firewall rules and peers
-  are unreachable.
-* `ipv6` is a module, and `tailscaled` only loads it later via
-  `ip6table_mangle`. The init script modprobes it before setting
-  `net.ipv6.conf.all.forwarding`, which otherwise silently stays off and
-  Tailscale reports "Subnet routing is enabled, but IP forwarding is disabled".
+One non-obvious detail: `ipv6` is a module, and `tailscaled` only loads it later
+via its own netfilter setup. The init script modprobes it before setting
+`net.ipv6.conf.all.forwarding`, which otherwise silently stays off and Tailscale
+reports "Subnet routing is enabled, but IP forwarding is disabled".
 
 ## Migrating from the forum recipe
 
@@ -80,32 +67,19 @@ If you previously followed the [forum
 thread](https://forums.lyrion.org/forum/user-forums/linux-unix/1722251-tailscale-on-picoreplayer),
 the build script copies your existing node identity out of `/var/lib/tailscale`
 the first time it runs, so you keep the same tailnet IP and do not have to
-re-authenticate. That earlier recipe created the state directory *inside* the
-package, which left `tailscaled.state` as a read-only symlink into the squashfs
-and put your node's private key in a shareable file — the rebuilt package
-contains only the binaries and scripts.
+re-authenticate. That recipe created the state directory *inside* the package,
+which left `tailscaled.state` as a read-only symlink into the squashfs and put
+the node's private key in a shareable file. The rebuilt package contains only
+the binaries and scripts.
 
-The script deliberately does not touch your configuration. Clean up the old
-startup path yourself, or the daemon will be started twice:
+The extension now starts itself, so remove whatever used to start it or the
+daemon will run twice:
 
-```sh
-# 1. Clear the pCP user commands that started tailscaled.
-#    Web UI: Tweaks -> User commands, blank the tailscaled and 'modprobe tun'
-#    entries. Or edit /usr/local/etc/pcp/pcp.cfg directly.
+* pCP user commands — Tweaks &rarr; User commands in the web UI, blanking the
+  `tailscaled` and `modprobe tun` entries.
+* Any `tailscaled` lines added to `/opt/bootlocal.sh`. Note that anything below
+  the `#pCPstop------` marker never ran anyway: `pcp_startup.sh` pipes into
+  `tee`, the daemons it spawns hold the pipe open, and the pipeline never
+  returns.
 
-# 2. Remove any tailscaled lines you added to /opt/bootlocal.sh.
-#    Note that anything below the #pCPstop------ marker never runs anyway:
-#    pcp_startup.sh pipes into tee, the daemons it spawns keep the pipe open,
-#    and the pipeline never returns.
-
-# 3. The daemon runs as root now, so an earlier dedicated user is unused.
-sudo deluser tailscale
-sudo delgroup tailscale
-
-# 4. Those all live in the pCP backup, so persist the changes.
-pcp bu
-```
-
-The migration copies the identity rather than moving it, so the original is left
-untouched under `/var/lib/tailscale` until the next reboot replaces it. Confirm
-the node still works before clearing out any older copies of your own.
+Both live in the pCP backup, so run `pcp bu` afterwards.
