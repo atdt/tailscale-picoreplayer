@@ -60,7 +60,9 @@ Compared with the original recipe in the [forum thread][thread] and mll's
   remember.
 
 Verifying the checksum and keeping state out of the backup are both good ideas
-taken from mll's script.
+taken from mll's script. wetenschaap first proposed `--tun=tailscale0` in place
+of userspace networking, and paul- of piCorePlayer explained the tun driver
+behaviour and how third-party binaries ought to be packaged.
 
 ## Kernel networking
 
