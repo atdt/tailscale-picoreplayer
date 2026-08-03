@@ -112,7 +112,15 @@ grep -qx 'tailscale.tcz' "$ONBOOT" || echo 'tailscale.tcz' >> "$ONBOOT"
 cd /
 rm -rf "$WORK"
 
-echo "Installed Tailscale $VERSION. Reboot to apply: sudo reboot"
-if ! sudo test -f "$STATEDIR/tailscaled.state"; then
-    echo "No node identity yet. After the reboot, run: sudo tailscale up"
+echo "Installed Tailscale $VERSION."
+if sudo test -f "$STATEDIR/tailscaled.state"; then
+    # An upgrade: the running extension cannot be swapped while it is mounted.
+    echo "Reboot to apply: sudo reboot"
+else
+    # Nothing is mounted yet, so a first install needs no reboot. Nothing
+    # prompts for authentication either -- the daemon just sits idle.
+    echo
+    echo "Load it and authenticate the node:"
+    echo "    tce-load -i tailscale"
+    echo "    sudo tailscale up"
 fi

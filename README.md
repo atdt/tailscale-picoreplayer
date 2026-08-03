@@ -1,21 +1,25 @@
 # Tailscale for piCorePlayer
 
 Builds an up-to-date Tailscale `.tcz` extension on the device and installs it.
-Re-run it any time to upgrade.
 
 ```sh
 ./mktailscale.tcz.sh
-sudo reboot
 ```
 
 Run it as `tc`, not with `sudo` — `tce-load` refuses to run as root, and the few
 steps that need privilege call `sudo` themselves.
 
-On a new node, authenticate once after the reboot:
+On a new node, load the extension and authenticate. No reboot needed, and
+nothing prompts you for this — the daemon starts unauthenticated and sits idle
+until you run:
 
 ```sh
+tce-load -i tailscale
 sudo tailscale up
 ```
+
+Re-run the script any time to upgrade. Upgrades do need a `sudo reboot`, since a
+mounted extension cannot be replaced in place.
 
 ## What it does
 
