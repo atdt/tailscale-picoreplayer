@@ -51,7 +51,7 @@ echo "Building Tailscale $VERSION ($ARCH)"
 
 rm -rf "$WORK"
 mkdir -p "$WORK/pkg/usr/local/bin" "$WORK/pkg/usr/local/etc/init.d" \
-         "$WORK/pkg/usr/local/tce.installed"
+         "$WORK/pkg/usr/local/tce.installed" "$WORK/pkg/usr/local/share/tailscale"
 cd "$WORK"
 
 wget -q "https://pkgs.tailscale.com/stable/$TGZ"
@@ -63,6 +63,14 @@ tar xzf "$TGZ"
 cp "tailscale_${VERSION}_${ARCH}/tailscale" \
    "tailscale_${VERSION}_${ARCH}/tailscaled" pkg/usr/local/bin/
 install -m 0755 "$INITD" pkg/usr/local/etc/init.d/tailscaled
+
+# BSD-3-Clause clause 2 requires binary redistributions to reproduce the
+# copyright notice and disclaimer. Tailscale's own tarball omits it, which is
+# their prerogative as the copyright holder but not ours as a repackager. Pin it
+# to the release tag so the text always matches the binaries beside it.
+wget -q -O pkg/usr/local/share/tailscale/LICENSE \
+    "https://raw.githubusercontent.com/tailscale/tailscale/v$VERSION/LICENSE"
+[ -s pkg/usr/local/share/tailscale/LICENSE ] || { echo "could not fetch LICENSE" >&2; exit 1; }
 
 # tce-load runs this as root the moment the extension mounts, so the package
 # starts itself with no user-side configuration. This is the documented Tiny Core
@@ -92,6 +100,11 @@ Size:           $(du -h tailscale.tcz | cut -f1)
 Extension_by:   built on-device by mktailscale.tcz.sh
 Tags:           vpn network wireguard mesh
 Comments:       Repackaged from the official static binaries.
+
+                License: /usr/local/share/tailscale/LICENSE
+                The binaries statically link many third-party Go packages;
+                see https://tailscale.com/licenses/tailscale for that list,
+                or run 'tailscale licenses'.
 
                 Starts itself via /usr/local/tce.installed/tailscale.
                 State is kept in tailscale_state on the pCP data partition so

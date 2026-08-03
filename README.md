@@ -34,6 +34,17 @@ sudo tailscale up
 Everything the script writes lives on the data partition, so no pCP backup is
 needed for any of it to persist.
 
+## Licensing
+
+Tailscale is BSD-3-Clause, whose second clause requires binary redistributions
+to reproduce the copyright notice and disclaimer. The official tarball ships no
+license file, so the build script fetches it from the matching release tag and
+installs it to `/usr/local/share/tailscale/LICENSE`. That matters if the package
+is ever shared rather than just built locally.
+
+The binaries statically link a large number of third-party Go packages. Run
+`tailscale licenses`, or see <https://tailscale.com/licenses/tailscale>.
+
 ## Kernel networking
 
 The daemon runs `--tun=tailscale0` so the tunnel is a real interface and the
