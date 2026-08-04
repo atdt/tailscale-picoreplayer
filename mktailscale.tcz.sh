@@ -157,9 +157,8 @@ Comments:       Repackaged from the official static binaries.
 Current:        $(date +%Y/%m/%d)
 EOF
 
-# tailscaled programs netfilter over netlink, so it needs the kernel modules but
-# no iptables or iproute2 userland. tce-load expands KERNEL to the running
-# version at load time, so this keeps resolving across kernel updates.
+# tailscaled programs netfilter over netlink -- kernel modules, no iptables or
+# iproute2 userland. tce-load expands KERNEL to the running version.
 echo 'ipv6-netfilter-KERNEL.tcz' > "$TCEDIR/optional/tailscale.tcz.dep"
 tce-load -w "ipv6-netfilter-$KERNEL" >/dev/null
 
