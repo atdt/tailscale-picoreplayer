@@ -9,6 +9,9 @@ chmod +x mktailscale.tcz.sh
 ./mktailscale.tcz.sh
 ```
 
+The same script is also packaged as `tailscale-installer.tcz`, which installs it
+as `tailscale-installer`. See [below](#building-the-installer-extension).
+
 On a fresh install, load the extension and authenticate:
 
 ```sh
@@ -27,6 +30,16 @@ To upgrade later, re-run the script and then `sudo reboot`.
 * Can act as a subnet router or exit node.
 * Survives pCP in-situ upgrades, including kernel changes.
 
+## Building the installer extension
+
+`mktailscale-installer.tcz.sh` wraps the build script as `tailscale-installer.tcz`,
+writing the `.tcz` and the `.info`, `.list` and `.md5.txt` the piCore repository
+expects into the current directory. Run it as `tc` on a piCorePlayer:
+
+```sh
+./mktailscale-installer.tcz.sh
+```
+
 ## Migrating from an earlier setup
 
 The build script carries an existing node identity over on first run, from
@@ -44,9 +57,10 @@ will run twice: the pCP user commands under Tweaks &rarr; User commands, and any
 
 This started from the [piCorePlayer forum thread][thread]. Checksum verification
 and keeping state out of the pCP backup are taken from mll's
-[`install_update_Tailscale.sh`][mll]; wetenschaap proposed `--tun=tailscale0` in
-place of userspace networking; and paul- of piCorePlayer explained the tun
-driver behaviour and how third-party binaries ought to be packaged.
+[`install_update_Tailscale.sh`][mll]. Using `--tun=tailscale0` in place of
+userspace networking was wetenschaap's suggestion. The tun driver behaviour and
+how third-party binaries ought to be packaged were explained by paul- of
+piCorePlayer.
 
 [thread]: https://forums.lyrion.org/forum/user-forums/linux-unix/1722251-tailscale-on-picoreplayer
 [mll]: https://forums.lyrion.org/forum/user-forums/linux-unix/1722251-tailscale-on-picoreplayer/page4
