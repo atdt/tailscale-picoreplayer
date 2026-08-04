@@ -157,8 +157,8 @@ Comments:       Repackaged from the official static binaries.
 Current:        $(date +%Y/%m/%d)
 EOF
 
-# tailscaled programs netfilter over netlink -- kernel modules, no iptables or
-# iproute2 userland. tce-load expands KERNEL to the running version.
+# tailscaled programs netfilter over netlink, so it needs the kernel modules
+# but not iptables or iproute2. tce-load expands KERNEL to the running version.
 echo 'ipv6-netfilter-KERNEL.tcz' > "$TCEDIR/optional/tailscale.tcz.dep"
 tce-load -w "ipv6-netfilter-$KERNEL" >/dev/null
 
@@ -169,12 +169,10 @@ cd /
 rm -rf "$WORK"
 
 echo "Installed Tailscale $VERSION."
+# A mounted extension cannot be swapped in place, so upgrades need a reboot.
 if sudo test -f "$STATEDIR/tailscaled.state"; then
-    # An upgrade: the running extension cannot be swapped while it is mounted.
     echo "Reboot to apply: sudo reboot"
 else
-    # Nothing is mounted yet, so a first install needs no reboot. Nothing
-    # prompts for authentication either -- the daemon just sits idle.
     echo
     echo "Load it and authenticate the node:"
     echo "    tce-load -i tailscale"
