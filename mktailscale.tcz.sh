@@ -15,7 +15,6 @@ esac
 TCEDIR=$(readlink -f /etc/sysconfig/tcedir)
 P2=$(dirname "$TCEDIR")
 STATEDIR=$P2/tailscale
-KERNEL=$(uname -r)
 WORK=$TCEDIR/tailscale-build   # the partition root is root-owned; this is not
 
 # Earlier layouts to carry an identity over from, live copy first: mll's
@@ -40,7 +39,7 @@ TGZ=$(wget -qO- 'https://pkgs.tailscale.com/stable/?mode=json' |
       grep -o "tailscale_[0-9.]*_$ARCH\.tgz" | head -n1)
 [ -n "$TGZ" ] || { echo "could not determine the latest version" >&2; exit 1; }
 VERSION=${TGZ#tailscale_}
-VERSION=${VERSION%_$ARCH.tgz}
+VERSION=${VERSION%_"$ARCH".tgz}
 echo "Building Tailscale $VERSION ($ARCH)"
 
 rm -rf "$WORK"
@@ -159,7 +158,7 @@ EOF
 
 # tce-load expands KERNEL to the running version.
 echo 'ipv6-netfilter-KERNEL.tcz' > "$TCEDIR/optional/tailscale.tcz.dep"
-tce-load -w "ipv6-netfilter-$KERNEL" >/dev/null
+tce-load -w ipv6-netfilter-KERNEL.tcz >/dev/null
 
 ONBOOT=$TCEDIR/onboot.lst
 grep -qx 'tailscale.tcz' "$ONBOOT" || echo 'tailscale.tcz' >> "$ONBOOT"
