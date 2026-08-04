@@ -146,15 +146,15 @@ Author:         Tailscale Inc.
 Original-site:  https://tailscale.com/
 Copying-policy: BSD-3-Clause
 Size:           $(du -h tailscale.tcz | cut -f1)
-Extension_by:   built on-device by mktailscale.tcz.sh
-Tags:           vpn network wireguard mesh
+Extension_by:   atdt
+Tags:           VPN NETWORK SECURITY CLI
 Comments:       Repackaged from the official static binaries.
                 Starts itself via /usr/local/tce.installed/tailscale.
                 Run 'tailscale up' once to authenticate the node.
 
                 License: /usr/local/share/tailscale/LICENSE
                 Third-party licenses: 'tailscale licenses'
-Current:        $(date +%Y/%m/%d)
+Current:        $(date +%Y/%m/%d) Tailscale $VERSION
 EOF
 
 # tce-load expands KERNEL to the running version.
