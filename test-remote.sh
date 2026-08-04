@@ -26,8 +26,22 @@ usage() {
     exit "$STATUS"
 }
 
+ok() {
+    echo "[OK] $1"
+}
+
+fail() {
+    echo "[FAIL] $1" >&2
+}
+
+watch_phase() {
+    PHASE=$1
+    trap 'LAST_STATUS=$?; if [ "$LAST_STATUS" -ne 0 ]; then fail "$PHASE failed (exit $LAST_STATUS)."; fi' EXIT
+}
+
 remote_tests() {
     RUN_INSTALLER=$1
+    watch_phase "Remote package test"
     set -e
 
     cd "$SCRIPT_DIR" || exit 1
@@ -37,7 +51,7 @@ remote_tests() {
     mkdir installer-root
     unsquashfs -d installer-root -no-progress tailscale-installer.tcz >/dev/null
     test -x installer-root/usr/local/bin/tailscale-installer
-    echo "Installer extension builds and opens."
+    ok "Installer extension builds and opens."
 
     if [ "$RUN_INSTALLER" = yes ]; then
         echo "Running the packaged installer..."
@@ -53,11 +67,12 @@ remote_tests() {
         mkdir tailscale-root
         unsquashfs -d tailscale-root -no-progress "$PACKAGE" >/dev/null
         tailscale-root/usr/local/bin/tailscale version
-        echo "Tailscale package builds and its binary runs."
+        ok "Tailscale package builds and its binary runs."
     fi
 }
 
 reinstall_prepare() {
+    watch_phase "Reinstall preparation"
     set -e
     cd "$SCRIPT_DIR" || exit 1
 
@@ -79,10 +94,11 @@ reinstall_prepare() {
     cp "$TCEDIR/onboot.lst" removed-tailscale/onboot.lst
     sed '/^tailscale\.tcz$/d' "$TCEDIR/onboot.lst" >onboot.lst
     mv onboot.lst "$TCEDIR/onboot.lst"
-    echo "Removed the Tailscale extension; persistent node identity was preserved."
+    ok "Removed the Tailscale extension; node identity was preserved."
 }
 
 reinstall() {
+    watch_phase "Clean installation"
     set -e
     cd "$SCRIPT_DIR" || exit 1
     TCEDIR=$(readlink -f /etc/sysconfig/tcedir)
@@ -101,20 +117,21 @@ reinstall() {
 
     MESSAGE=$(/usr/local/tce.installed/tailscale-installer)
     test -z "$MESSAGE"
-    echo "The installer prompt appeared before installation and not afterward."
+    ok "The installer prompt appeared before installation and not afterward."
 
     echo "Loading Tailscale..."
     tce-load -is tailscale
     tailscale version
     wait_for_tailscale
-    echo "Tailscale installed and connected."
+    ok "Tailscale installed and connected."
 }
 
 reinstall_verify() {
+    watch_phase "Post-reboot verification"
     set -e
     command -v tailscale >/dev/null
     wait_for_tailscale
-    echo "Tailscale started and connected after reboot."
+    ok "Tailscale started and connected after reboot."
 }
 
 wait_for_tailscale() {
@@ -126,7 +143,7 @@ wait_for_tailscale() {
         ATTEMPTS=$((ATTEMPTS + 1))
         sleep 2
     done
-    echo "timed out waiting for Tailscale to connect" >&2
+    fail "Timed out waiting for Tailscale to connect."
     return 1
 }
 
@@ -175,26 +192,29 @@ echo "Using $HOST (override with a user@host argument)."
 
 reboot_player() {
     OLD_BOOT_ID=$(ssh "$HOST" cat /proc/sys/kernel/random/boot_id) || return 1
+    echo "Rebooting $HOST..."
     ssh "$HOST" sudo reboot >/dev/null 2>&1 || true
+    echo "Waiting for $HOST to come back..."
 
     ATTEMPTS=0
     while [ "$ATTEMPTS" -lt 90 ]; do
         NEW_BOOT_ID=$(ssh -o BatchMode=yes -o ConnectTimeout=2 "$HOST" \
             cat /proc/sys/kernel/random/boot_id 2>/dev/null) || NEW_BOOT_ID=
         if [ -n "$NEW_BOOT_ID" ] && [ "$NEW_BOOT_ID" != "$OLD_BOOT_ID" ]; then
+            ok "$HOST rebooted."
             return 0
         fi
         ATTEMPTS=$((ATTEMPTS + 1))
         sleep 2
     done
-    echo "timed out waiting for $HOST to reboot" >&2
+    fail "Timed out waiting for $HOST to reboot."
     return 1
 }
 
 if [ "$REINSTALL" = yes ]; then
     if [ "$ASSUME_YES" = no ]; then
         if [ ! -t 0 ]; then
-            echo "--reinstall requires confirmation; use --yes for a non-interactive run" >&2
+            fail "--reinstall requires confirmation; use --yes for a non-interactive run."
             exit 2
         fi
         echo "This will remove Tailscale from $HOST and reboot it twice."
@@ -210,14 +230,14 @@ if [ "$REINSTALL" = yes ]; then
     REMOTE_TCEDIR=$(ssh "$HOST" readlink -f /etc/sysconfig/tcedir) || exit 1
     case "$REMOTE_TCEDIR" in
         /*) ;;
-        *) echo "refusing unexpected remote TCEDIR: $REMOTE_TCEDIR" >&2; exit 1 ;;
+        *) fail "Refusing unexpected remote TCEDIR: $REMOTE_TCEDIR"; exit 1 ;;
     esac
     ssh "$HOST" mkdir -p "$REMOTE_TCEDIR/tailscale-test" || exit 1
     REMOTE_DIR=$(ssh "$HOST" mktemp -d \
         "$REMOTE_TCEDIR/tailscale-test/run.XXXXXX") || exit 1
     case "$REMOTE_DIR" in
         "$REMOTE_TCEDIR"/tailscale-test/run.*) ;;
-        *) echo "refusing unexpected remote work path: $REMOTE_DIR" >&2; exit 1 ;;
+        *) fail "Refusing unexpected remote work path: $REMOTE_DIR"; exit 1 ;;
     esac
 
     REINSTALL_SUCCESS=no
@@ -225,7 +245,7 @@ if [ "$REINSTALL" = yes ]; then
         if [ "$REINSTALL_SUCCESS" = yes ]; then
             ssh "$HOST" rm -rf "$REMOTE_DIR"
         else
-            echo "Reinstall test failed; recovery files remain at $HOST:$REMOTE_DIR" >&2
+            fail "Reinstall failed; recovery files remain at $HOST:$REMOTE_DIR"
         fi
     }
     trap reinstall_cleanup EXIT
@@ -251,7 +271,7 @@ fi
 REMOTE_DIR=$(ssh "$HOST" mktemp -d) || exit 1
 case "$REMOTE_DIR" in
     /tmp/*) ;;
-    *) echo "refusing unexpected remote temporary path: $REMOTE_DIR" >&2; exit 1 ;;
+    *) fail "Refusing unexpected remote temporary path: $REMOTE_DIR"; exit 1 ;;
 esac
 
 cleanup() {
