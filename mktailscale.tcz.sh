@@ -80,7 +80,7 @@ PIDFILE=/var/run/tailscaled.pid
 # not a pCP backup has been taken.
 STATEDIR=$(dirname "$(readlink -f /etc/sysconfig/tcedir)")/tailscale
 
-test -x $DAEMON || exit 0
+test -x "$DAEMON" || exit 0
 
 case "$1" in
   start)
@@ -101,13 +101,14 @@ case "$1" in
         echo "tun/netfilter unavailable, using userspace networking"
     fi
 
-    start-stop-daemon --start --background --pidfile $PIDFILE --make-pidfile \
-        --startas $DAEMON -- \
-        --statedir="$STATEDIR" --tun=$TUN --no-logs-no-support
+    start-stop-daemon --start --background --pidfile "$PIDFILE" --make-pidfile \
+        --startas "$DAEMON" -- \
+        --statedir="$STATEDIR" --tun="$TUN" --no-logs-no-support
     ;;
   stop)
     echo "Stopping tailscaled"
-    start-stop-daemon --stop --pidfile $PIDFILE --retry 10
+    start-stop-daemon --stop --pidfile "$PIDFILE" --retry 10 &&
+        rm -f "$PIDFILE"
     ;;
   restart)
     "$0" stop
