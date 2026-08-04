@@ -21,6 +21,16 @@ sudo tailscale up
 
 To upgrade later, re-run the script and then `sudo reboot`.
 
+The current stable release is the default. To build a different one, or if the
+script can no longer work out which that is, name it:
+
+```sh
+TAILSCALE_VERSION=1.102.1 ./mktailscale.tcz.sh
+```
+
+<https://pkgs.tailscale.com/stable/> lists the current version, and serves
+`tailscale_latest_<arch>.tgz` as a redirect to it.
+
 ## What it does
 
 * Downloads the current stable release for your architecture.
@@ -40,14 +50,12 @@ expects into the current directory. Run it as `tc` on a piCorePlayer:
 ./mktailscale-installer.tcz.sh
 ```
 
-## Migrating from an earlier setup
+## Coming from a manual install
 
-The build script carries an existing node identity over on first run, from
-either `tailscale_state` on the data partition (where mll's script kept it) or
-`/var/lib/tailscale` (where the forum recipe did), so you keep the same tailnet
-IP without re-authenticating. This also gets your node's private key out of the
-`.tcz`, where the forum recipe left it alongside a state file the daemon could
-never write.
+Several recipes for installing Tailscale circulated on the piCorePlayer forum
+before this package existed. If you followed one of them, the script picks your
+node identity up from wherever that recipe left it, so you keep the same tailnet
+IP without re-authenticating.
 
 The extension starts itself, so remove whatever used to start it or the daemon
 will run twice: the pCP user commands under Tweaks &rarr; User commands, and any

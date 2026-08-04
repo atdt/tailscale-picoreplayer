@@ -32,11 +32,15 @@ fi
 # Only needed for the build, so -l loads it without adding to onboot.lst.
 command -v mksquashfs >/dev/null || tce-load -wil squashfs-tools
 
-TGZ=$(wget -qO- 'https://pkgs.tailscale.com/stable/?mode=json' |
-      grep -o "tailscale_[0-9.]*_$ARCH\.tgz" | head -n1)
-[ -n "$TGZ" ] || { echo "could not determine the latest version" >&2; exit 1; }
-VERSION=${TGZ#tailscale_}
-VERSION=${VERSION%_"$ARCH".tgz}
+# Set TAILSCALE_VERSION to build a particular release, which also gets you past
+# a change to how the current one is published.
+VERSION=$TAILSCALE_VERSION
+if [ -z "$VERSION" ]; then
+    VERSION=$(wget -qO- 'https://pkgs.tailscale.com/stable/?mode=json' |
+              sed -n "s/.*tailscale_\([0-9.]*\)_$ARCH\.tgz.*/\1/p" | head -n1)
+    [ -n "$VERSION" ] || { echo "could not determine the latest version" >&2; exit 1; }
+fi
+TGZ=tailscale_${VERSION}_$ARCH.tgz
 echo "Building Tailscale $VERSION ($ARCH)"
 
 rm -rf "$WORK"
@@ -47,7 +51,7 @@ cd "$WORK"
 wget -q "https://pkgs.tailscale.com/stable/$TGZ"
 wget -q "https://pkgs.tailscale.com/stable/$TGZ.sha256"
 # Tailscale publishes a bare hash, not the "hash  filename" sha256sum -c expects.
-echo "$(cat "$TGZ.sha256")  $TGZ" | sha256sum -c -
+echo "$(awk '{print $1}' "$TGZ.sha256")  $TGZ" | sha256sum -c -
 
 tar xzf "$TGZ"
 cp "tailscale_${VERSION}_${ARCH}/tailscale" \

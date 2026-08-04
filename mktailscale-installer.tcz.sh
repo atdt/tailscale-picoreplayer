@@ -52,8 +52,7 @@ Extension_by:   atdt
 Tags:           VPN NETWORK SECURITY CLI tailscale installer
 Comments:       Tailscale is a mesh VPN built on WireGuard. This extension
                 downloads the current stable release for this machine's
-                architecture, verifies its SHA256, and packages it as
-                tailscale.tcz.
+                architecture and packages it as tailscale.tcz.
 
                 Run it as tc, not root:
                   tailscale-installer
