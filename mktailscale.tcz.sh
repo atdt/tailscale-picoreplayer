@@ -29,7 +29,7 @@ if ! sudo test -f "$STATEDIR/tailscaled.state"; then
     done
 fi
 
-# -l loads without adding to onboot.lst; this is only needed to build.
+# Only needed for the build, so -l loads it without adding to onboot.lst.
 command -v mksquashfs >/dev/null || tce-load -wil squashfs-tools
 
 TGZ=$(wget -qO- 'https://pkgs.tailscale.com/stable/?mode=json' |
@@ -126,16 +126,27 @@ cat > pkg/usr/local/tce.installed/tailscale <<'EOF'
 #!/bin/sh
 /usr/local/etc/init.d/tailscaled start
 EOF
-chmod 0775 pkg/usr/local/tce.installed/tailscale
+chmod 0755 pkg/usr/local/tce.installed/tailscale
 
-# Matches how the stock piCore extensions are built; -all-root because tc builds.
+# Matches how the stock piCore extensions are built; -all-root because the
+# build runs as tc rather than root.
 mksquashfs pkg tailscale.tcz -b 4k -no-xattrs -all-root -noappend >/dev/null
 
-install -m 0644 tailscale.tcz "$TCEDIR/optional/tailscale.tcz"
-md5sum tailscale.tcz > "$TCEDIR/optional/tailscale.tcz.md5.txt"
-( cd pkg && find usr -not -type d ) > "$TCEDIR/optional/tailscale.tcz.list"
+# The loaded extension is loop-mounted from this file, so it cannot be replaced
+# in place. tce-setup moves anything staged in optional/upgrade into optional/
+# early on the next boot.
+if [ -f /usr/local/tce.installed/tailscale ]; then
+    DEST=$TCEDIR/optional/upgrade
+    mkdir -p "$DEST"
+else
+    DEST=$TCEDIR/optional
+fi
 
-cat > "$TCEDIR/optional/tailscale.tcz.info" <<EOF
+install -m 0644 tailscale.tcz "$DEST/tailscale.tcz"
+md5sum tailscale.tcz > "$DEST/tailscale.tcz.md5.txt"
+( cd pkg && find usr -not -type d ) > "$DEST/tailscale.tcz.list"
+
+cat > "$DEST/tailscale.tcz.info" <<EOF
 Title:          tailscale.tcz
 Description:    Tailscale mesh VPN (WireGuard-based)
 Version:        $VERSION
@@ -155,7 +166,7 @@ Current:        $(date +%Y/%m/%d) Tailscale $VERSION
 EOF
 
 # tce-load expands KERNEL to the running version.
-echo 'ipv6-netfilter-KERNEL.tcz' > "$TCEDIR/optional/tailscale.tcz.dep"
+echo 'ipv6-netfilter-KERNEL.tcz' > "$DEST/tailscale.tcz.dep"
 tce-load -w ipv6-netfilter-KERNEL.tcz >/dev/null
 
 ONBOOT=$TCEDIR/onboot.lst
@@ -165,12 +176,12 @@ cd /
 rm -rf "$WORK"
 
 echo "Installed Tailscale $VERSION."
-# A mounted extension cannot be swapped in place, so upgrades need a reboot.
-if sudo test -f "$STATEDIR/tailscaled.state"; then
-    echo "Reboot to apply: sudo reboot"
-else
+if [ "$DEST" = "$TCEDIR/optional" ]; then
     echo
     echo "Load it and authenticate the node:"
     echo "    tce-load -i tailscale"
     echo "    sudo tailscale up"
+else
+    echo "Staged for the next boot, over the copy that is loaded now:"
+    echo "    sudo reboot"
 fi
