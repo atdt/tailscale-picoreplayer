@@ -1,6 +1,6 @@
 #!/bin/sh
 # Build and install a Tailscale .tcz extension for piCorePlayer.
-# Re-run to upgrade. Run as tc: tce-load refuses to run as root.
+# Re-run to upgrade.
 set -e
 
 [ "$(id -u)" != 0 ] || { echo "run as tc, not root" >&2; exit 1; }
@@ -17,11 +17,8 @@ P2=$(dirname "$TCEDIR")
 STATEDIR=$P2/tailscale
 WORK=$TCEDIR/tailscale-build   # the partition root is root-owned; this is not
 
-# Earlier layouts to carry an identity over from, live copy first: mll's
-# maintenance script used tailscale_state, and the forum recipe kept state
-# inside the .tcz, where tailscaled.state is a read-only symlink into the
-# squashfs that goes away with the old package. Tested through sudo because as
-# tc these checks come back false and would overwrite good state.
+# If we find Tailscale state in a legacy location, migrate it so the node
+# retains its identity.
 if ! sudo test -f "$STATEDIR/tailscaled.state"; then
     for old in "$P2/tailscale_state" /var/lib/tailscale; do
         sudo test -e "$old/tailscaled.state" || continue
@@ -56,8 +53,8 @@ tar xzf "$TGZ"
 cp "tailscale_${VERSION}_${ARCH}/tailscale" \
    "tailscale_${VERSION}_${ARCH}/tailscaled" pkg/usr/local/bin/
 
-# BSD-3-Clause requires binary redistributions to carry the notice; the upstream
-# tarball has no license file. Pinned to the tag so it matches these binaries.
+# BSD-3-Clause requires binary redistributions to carry the notice, but the
+# upstream tarball has no license file.
 wget -q -O pkg/usr/local/share/tailscale/LICENSE \
     "https://raw.githubusercontent.com/tailscale/tailscale/v$VERSION/LICENSE"
 
