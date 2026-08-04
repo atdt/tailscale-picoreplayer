@@ -154,7 +154,7 @@ Comments:       Repackaged from the official static binaries.
 
                 License: /usr/local/share/tailscale/LICENSE
                 Third-party licenses: 'tailscale licenses'
-Current:        $(date +%Y/%m/%d) Built for kernel $KERNEL
+Current:        $(date +%Y/%m/%d)
 EOF
 
 # tailscaled programs netfilter over netlink, so it needs the kernel modules but

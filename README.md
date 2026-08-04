@@ -25,6 +25,7 @@ To upgrade later, re-run the script and then `sudo reboot`.
 * Starts `tailscaled` when the extension loads.
 * Keeps the node identity on the pCP data partition, so it survives reboots.
 * Can act as a subnet router or exit node.
+* Survives pCP in-situ upgrades, including kernel changes.
 
 ## Migrating from an earlier setup
 
