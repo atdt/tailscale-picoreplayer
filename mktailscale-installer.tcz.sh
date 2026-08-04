@@ -59,17 +59,7 @@ Comments:       Tailscale is a mesh VPN built on WireGuard. This extension
                   tce-load -i tailscale
                   sudo tailscale up
 
-                Re-run tailscale-installer to upgrade, then reboot. A mounted
-                extension cannot be swapped in place.
-
-                The node identity is kept on the data partition, outside the
-                pCP backup, so it survives reboots whether or not a backup has
-                been taken, and survives in-situ pCP updates. An identity from
-                an earlier hand-rolled setup is carried over on first run.
-
-                tailscaled starts itself when tailscale.tcz loads. Clear
-                anything that used to start it, under Tweaks or in
-                /opt/bootlocal.sh, or the daemon runs twice.
+                Re-run tailscale-installer to upgrade.
 Change-log:     $(date +%Y/%m/%d) Original
 Current:        $(date +%Y/%m/%d) Original
 EOF
