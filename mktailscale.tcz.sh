@@ -12,6 +12,7 @@ case "$(uname -m)" in
     *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;;
 esac
 
+SELF=$(readlink -f "$0")
 TCEDIR=$(readlink -f /etc/sysconfig/tcedir)
 P2=$(dirname "$TCEDIR")
 STATEDIR=$P2/tailscale
@@ -56,6 +57,9 @@ echo "$(awk '{print $1}' "$TGZ.sha256")  $TGZ" | sha256sum -c -
 tar xzf "$TGZ"
 cp "tailscale_${VERSION}_${ARCH}/tailscale" \
    "tailscale_${VERSION}_${ARCH}/tailscaled" pkg/usr/local/bin/
+
+# Upgrades need this script, and /home/tc does not survive a reboot.
+install -m 0755 "$SELF" pkg/usr/local/bin/tailscale-installer
 
 # BSD-3-Clause requires binary redistributions to carry the notice, but the
 # upstream tarball has no license file.
@@ -163,6 +167,7 @@ Tags:           VPN NETWORK SECURITY CLI
 Comments:       Repackaged from the official static binaries.
                 Starts itself via /usr/local/tce.installed/tailscale.
                 Run 'tailscale up' once to authenticate the node.
+                Run 'tailscale-installer' to upgrade.
 
                 License: /usr/local/share/tailscale/LICENSE
                 Third-party licenses: 'tailscale licenses'
@@ -185,6 +190,8 @@ if [ "$DEST" = "$TCEDIR/optional" ]; then
     echo "Load it and authenticate the node:"
     echo "    tce-load -i tailscale"
     echo "    sudo tailscale up"
+    echo
+    echo "To upgrade later, run tailscale-installer."
 else
     echo "Staged for the next boot, over the copy that is loaded now:"
     echo "    sudo reboot"

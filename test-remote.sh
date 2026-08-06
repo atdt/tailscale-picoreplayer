@@ -6,7 +6,7 @@
 #
 # Modes:
 #   - default: build and open tailscale-installer.tcz.
-#   - --run-installer: run it and check the resulting Tailscale binary.
+#   - --run-installer: run it and check the resulting Tailscale package.
 #   - --reinstall: remove Tailscale and reboot to test a clean install.
 #
 # The reinstall test preserves node identity and requires a LAN address. It asks
@@ -68,6 +68,10 @@ remote_tests() {
         unsquashfs -d tailscale-root -no-progress "$PACKAGE" >/dev/null
         tailscale-root/usr/local/bin/tailscale version
         ok "Tailscale package builds and its binary runs."
+
+        test -x tailscale-root/usr/local/bin/tailscale-installer
+        cmp mktailscale.tcz.sh tailscale-root/usr/local/bin/tailscale-installer
+        ok "Tailscale package carries the build script for later upgrades."
     fi
 }
 
@@ -132,6 +136,9 @@ reinstall_verify() {
     command -v tailscale >/dev/null
     wait_for_tailscale
     ok "Tailscale started and connected after reboot."
+
+    command -v tailscale-installer >/dev/null
+    ok "The upgrade command survives without the installer extension."
 }
 
 wait_for_tailscale() {

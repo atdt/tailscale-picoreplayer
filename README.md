@@ -19,7 +19,16 @@ tce-load -i tailscale
 sudo tailscale up
 ```
 
-To upgrade later, re-run the script and then `sudo reboot`.
+The extension carries a copy of the script as `tailscale-installer`, so upgrading
+later needs nothing kept or fetched:
+
+```sh
+tailscale-installer
+sudo reboot
+```
+
+That copy is frozen at the version that built the extension. Re-download the
+script from here to pick up any changes since.
 
 The current stable release is the default. To build a different one, or if the
 script can no longer work out which that is, name it:
@@ -35,6 +44,7 @@ TAILSCALE_VERSION=1.102.1 ./mktailscale.tcz.sh
 
 * Downloads the current stable release for your architecture.
 * Builds `tailscale.tcz` and sets it to load at boot.
+* Puts a copy of itself in the extension, as `tailscale-installer`.
 * Starts `tailscaled` when the extension loads.
 * Keeps the node identity on the pCP data partition, so it survives reboots.
 * Can act as a subnet router or exit node.
