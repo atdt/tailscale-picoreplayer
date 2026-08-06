@@ -9,9 +9,6 @@ chmod +x mktailscale.tcz.sh
 ./mktailscale.tcz.sh
 ```
 
-The same script is also packaged as `tailscale-installer.tcz`, which installs it
-as `tailscale-installer`. See [below](#building-the-installer-extension).
-
 On a fresh install, load the extension and authenticate:
 
 ```sh
@@ -50,16 +47,6 @@ TAILSCALE_VERSION=1.102.1 ./mktailscale.tcz.sh
 * Can act as a subnet router or exit node.
 * Survives pCP in-situ upgrades, including kernel changes.
 
-## Building the installer extension
-
-`mktailscale-installer.tcz.sh` wraps the build script as `tailscale-installer.tcz`,
-writing the `.tcz` and the `.info`, `.list` and `.md5.txt` the piCore repository
-expects into the current directory. Run it as `tc` on a piCorePlayer:
-
-```sh
-./mktailscale-installer.tcz.sh
-```
-
 ## Coming from a manual install
 
 Several recipes for installing Tailscale circulated on the piCorePlayer forum
@@ -70,6 +57,18 @@ IP without re-authenticating.
 The extension starts itself, so remove whatever used to start it or the daemon
 will run twice: the pCP user commands under Tweaks &rarr; User commands, and any
 `tailscaled` lines in `/opt/bootlocal.sh`. Then run `pcp bu`.
+
+## Packaging the script as an extension
+
+The build script can itself be shipped as an extension, so that loading it from a
+repository puts `tailscale-installer` on the system and nobody has to download a
+script by hand. `mktailscale-installer.tcz.sh` builds that, writing
+`tailscale-installer.tcz` alongside the `.info`, `.list` and `.md5.txt` a piCore
+repository expects. Run it as `tc` on a piCorePlayer:
+
+```sh
+./mktailscale-installer.tcz.sh
+```
 
 ## Acknowledgements
 

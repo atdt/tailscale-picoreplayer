@@ -1,5 +1,7 @@
 #!/bin/sh
-# Build tailscale-installer.tcz, the extension that carries the build script.
+# Build tailscale-installer.tcz, which ships mktailscale.tcz.sh as an extension
+# so it can be installed from a repository rather than downloaded by hand.
+# Installing Tailscale needs only mktailscale.tcz.sh.
 # Run as tc on a piCorePlayer. The .tcz and its metadata land in the current
 # directory.
 set -e
