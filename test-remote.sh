@@ -251,7 +251,7 @@ if [ "$REINSTALL" = yes ]; then
     trap reinstall_cleanup EXIT
     trap 'exit 130' HUP INT TERM
 
-    scp -q "$SCRIPT_DIR/test-remote.sh" "$SCRIPT_DIR/mktailscale.tcz.sh" \
+    scp -pq "$SCRIPT_DIR/test-remote.sh" "$SCRIPT_DIR/mktailscale.tcz.sh" \
         "$SCRIPT_DIR/mktailscale-installer.tcz.sh" \
         "$HOST:$REMOTE_DIR/" || exit 1
 
@@ -280,7 +280,7 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' HUP INT TERM
 
-scp -q "$SCRIPT_DIR/test-remote.sh" "$SCRIPT_DIR/mktailscale.tcz.sh" \
+scp -pq "$SCRIPT_DIR/test-remote.sh" "$SCRIPT_DIR/mktailscale.tcz.sh" \
     "$SCRIPT_DIR/mktailscale-installer.tcz.sh" \
     "$HOST:$REMOTE_DIR/" || exit 1
 
