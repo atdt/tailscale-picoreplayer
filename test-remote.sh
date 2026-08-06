@@ -55,7 +55,8 @@ remote_tests() {
 
     if [ "$RUN_INSTALLER" = yes ]; then
         echo "Running the packaged installer..."
-        installer-root/usr/local/bin/tailscale-installer
+        # --force so an up-to-date player still builds the package checked below.
+        installer-root/usr/local/bin/tailscale-installer --force
 
         TCEDIR=$(readlink -f /etc/sysconfig/tcedir)
         if [ -f /usr/local/tce.installed/tailscale ]; then

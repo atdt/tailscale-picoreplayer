@@ -1,6 +1,6 @@
 #!/bin/sh
 # Build and install a Tailscale .tcz extension for piCorePlayer.
-# Re-run to upgrade.
+# Re-run to upgrade, or --force to reinstall the current version.
 set -e
 
 [ "$(id -u)" != 0 ] || { echo "run as tc, not root" >&2; exit 1; }
@@ -30,9 +30,6 @@ if ! sudo test -f "$STATEDIR/tailscaled.state"; then
     done
 fi
 
-# Only needed for the build, so -l loads it without adding to onboot.lst.
-command -v mksquashfs >/dev/null || tce-load -wil squashfs-tools
-
 # Set TAILSCALE_VERSION to build a particular release, which also gets you past
 # a change to how the current one is published.
 VERSION=$TAILSCALE_VERSION
@@ -40,9 +37,17 @@ if [ -z "$VERSION" ]; then
     VERSION=$(wget -qO- 'https://pkgs.tailscale.com/stable/?mode=json' |
               sed -n "s/.*tailscale_\([0-9.]*\)_$ARCH\.tgz.*/\1/p" | head -n1)
     [ -n "$VERSION" ] || { echo "could not determine the latest version" >&2; exit 1; }
+    # Nested, so that naming a version builds it whether or not it is installed.
+    if [ "$1" != --force ] && [ "$(tailscale version 2>/dev/null | head -n1)" = "$VERSION" ]; then
+        echo "Tailscale $VERSION is already the latest. Re-run with --force to reinstall."
+        exit 0
+    fi
 fi
 TGZ=tailscale_${VERSION}_$ARCH.tgz
 echo "Building Tailscale $VERSION ($ARCH)"
+
+# Only needed for the build, so -l loads it without adding to onboot.lst.
+command -v mksquashfs >/dev/null || tce-load -wil squashfs-tools
 
 rm -rf "$WORK"
 mkdir -p "$WORK/pkg/usr/local/bin" "$WORK/pkg/usr/local/etc/init.d" \
@@ -193,6 +198,7 @@ if [ "$DEST" = "$TCEDIR/optional" ]; then
     echo
     echo "To upgrade later, run tailscale-installer."
 else
-    echo "Staged for the next boot, over the copy that is loaded now:"
+    echo
+    echo "Reboot to apply it:"
     echo "    sudo reboot"
 fi
