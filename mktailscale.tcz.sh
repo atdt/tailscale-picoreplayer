@@ -16,7 +16,7 @@ SELF=$(readlink -f "$0")
 TCEDIR=$(readlink -f /etc/sysconfig/tcedir)
 P2=$(dirname "$TCEDIR")
 STATEDIR=$P2/tailscale
-WORK=$TCEDIR/tailscale-build   # the partition root is root-owned; this is not
+WORK=/tmp/tailscale-build
 
 # If we find Tailscale state in a legacy location, migrate it so the node
 # retains its identity.
@@ -49,7 +49,7 @@ echo "Building Tailscale $VERSION ($ARCH)"
 # Only needed for the build, so -l loads it without adding to onboot.lst.
 command -v mksquashfs >/dev/null || tce-load -wil squashfs-tools
 
-rm -rf "$WORK"
+[ -d $WORK ] && sudo rm -rf "$WORK"
 mkdir -p "$WORK/pkg/usr/local/bin" "$WORK/pkg/usr/local/etc/init.d" \
          "$WORK/pkg/usr/local/tce.installed" "$WORK/pkg/usr/local/share/tailscale"
 cd "$WORK"
@@ -191,7 +191,6 @@ ONBOOT=$TCEDIR/onboot.lst
 grep -qx 'tailscale.tcz' "$ONBOOT" || echo 'tailscale.tcz' >> "$ONBOOT"
 
 cd /tmp
-echo "Removing Working Directory"
 # pkg directory is set to root, so we need sudo here.
 sudo rm -rf "$WORK"
 
