@@ -59,9 +59,10 @@ mkdir -p "$WORK/pkg/usr/local/bin" "$WORK/pkg/usr/local/etc/init.d" \
          "$WORK/pkg/usr/local/tce.installed" "$WORK/pkg/usr/local/share/tailscale"
 cd "$WORK"
 
-echo "Downloading https://pkgs.tailscale.com/stable/$TGZ"
-wget -q "https://pkgs.tailscale.com/stable/$TGZ"
-wget -q "https://pkgs.tailscale.com/stable/$TGZ.sha256"
+TGZ_URL=https://pkgs.tailscale.com/stable/$TGZ
+echo "Downloading $TGZ_URL"
+wget -q "$TGZ_URL"
+wget -q "$TGZ_URL.sha256"
 # Tailscale publishes a bare hash, not the "hash  filename" sha256sum -c expects.
 echo "$(awk '{print $1}' "$TGZ.sha256")  $TGZ" | sha256sum -c -
 
@@ -75,9 +76,9 @@ install -m 0755 "$SELF" pkg/usr/local/bin/tailscale-installer
 
 # BSD-3-Clause requires binary redistributions to carry the notice, but the
 # upstream tarball has no license file.
-echo "Installing License from https://raw.githubusercontent.com/tailscale/tailscale/v$VERSION/LICENSE"
-wget -q -O pkg/usr/local/share/tailscale/LICENSE \
-    "https://raw.githubusercontent.com/tailscale/tailscale/v$VERSION/LICENSE"
+LICENSE_URL=https://raw.githubusercontent.com/tailscale/tailscale/v$VERSION/LICENSE
+echo "Installing license from $LICENSE_URL"
+wget -q -O pkg/usr/local/share/tailscale/LICENSE "$LICENSE_URL"
 
 cat > pkg/usr/local/etc/init.d/tailscaled <<'INIT'
 #!/bin/sh
