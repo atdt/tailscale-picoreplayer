@@ -16,7 +16,6 @@ SELF=$(readlink -f "$0")
 TCEDIR=$(readlink -f /etc/sysconfig/tcedir)
 P2=$(dirname "$TCEDIR")
 STATEDIR=$P2/tailscale
-WORK=/tmp/tailscale-build
 
 # If we find Tailscale state in a legacy location, migrate it so the node
 # retains its identity.
@@ -49,7 +48,13 @@ echo "Building Tailscale $VERSION ($ARCH)"
 # Only needed for the build, so -l loads it without adding to onboot.lst.
 command -v mksquashfs >/dev/null || tce-load -wil squashfs-tools
 
-[ -d $WORK ] && sudo rm -rf "$WORK"
+WORK=$(mktemp -d /tmp/tailscale-build.XXXXXX)
+cleanup() {
+    # The build leaves the package tree owned by root.
+    sudo rm -rf "$WORK"
+}
+trap cleanup EXIT
+
 mkdir -p "$WORK/pkg/usr/local/bin" "$WORK/pkg/usr/local/etc/init.d" \
          "$WORK/pkg/usr/local/tce.installed" "$WORK/pkg/usr/local/share/tailscale"
 cd "$WORK"
@@ -191,10 +196,6 @@ tce-load -w ipv6-netfilter-KERNEL.tcz >/dev/null
 
 ONBOOT=$TCEDIR/onboot.lst
 grep -qx 'tailscale.tcz' "$ONBOOT" || echo 'tailscale.tcz' >> "$ONBOOT"
-
-cd /tmp
-# pkg directory is set to root, so we need sudo here.
-sudo rm -rf "$WORK"
 
 echo "Installed Tailscale $VERSION."
 if [ "$DEST" = "$TCEDIR/optional" ]; then

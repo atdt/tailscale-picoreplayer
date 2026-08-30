@@ -251,7 +251,7 @@ if [ "$REINSTALL" = yes ]; then
     REINSTALL_SUCCESS=no
     reinstall_cleanup() {
         if [ "$REINSTALL_SUCCESS" = yes ]; then
-            ssh "$HOST" rm -rf "$REMOTE_DIR"
+            ssh "$HOST" rm -rf "$REMOTE_TCEDIR/tailscale-test"
         else
             fail "Reinstall failed; recovery files remain at $HOST:$REMOTE_DIR"
         fi
