@@ -34,10 +34,9 @@ echo "    sudo tailscale up"
 EOF
 
 cd "$WORK"
-# Matches how the stock piCore extensions are built; -all-root because the
-# build runs as tc rather than root.
-# Pi5 kernel requires 16k block size.
-mksquashfs pkg "$NAME.tcz" -b 16k -no-xattrs -all-root -noappend >/dev/null
+# The build runs as tc rather than root. The Pi 5 kernel requires a 16 KiB
+# SquashFS block size.
+mksquashfs pkg "$NAME.tcz" -b 16k -all-root >/dev/null
 
 install -m 0644 "$NAME.tcz" "$OUT/$NAME.tcz"
 md5sum "$NAME.tcz" > "$OUT/$NAME.tcz.md5.txt"

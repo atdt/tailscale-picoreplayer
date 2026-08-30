@@ -148,10 +148,8 @@ sudo -E chown -R root:root pkg
 sudo -E chown -R root:staff pkg/usr/local/tce.installed
 sudo -E chmod -R 775 pkg/usr/local/tce.installed
 
-# Matches how the stock piCore extensions are built;
-#  -all-root will override the set permissions, so don't use.
-#  -Pi5 kernel requires 16k block size.
-mksquashfs pkg tailscale.tcz -b 16k -no-xattrs -noappend >/dev/null
+# The Pi 5 kernel requires a 16 KiB SquashFS block size.
+mksquashfs pkg tailscale.tcz -b 16k >/dev/null
 
 # The loaded extension is loop-mounted from this file, so it cannot be replaced
 # in place. tce-setup moves anything staged in optional/upgrade into optional/
