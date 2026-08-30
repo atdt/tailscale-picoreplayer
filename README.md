@@ -35,6 +35,17 @@ TAILSCALE_VERSION=1.102.1 ./mktailscale.tcz.sh
 
 <https://pkgs.tailscale.com/stable/> lists the current version.
 
+## Development
+
+Install [ShellCheck 0.11.0 or newer](https://www.shellcheck.net/), then enable
+BusyBox checks and the pre-commit hook:
+
+```sh
+make setup
+```
+
+Run the checks without changing Git configuration with `make check`.
+
 ## What it does
 
 * Downloads the current stable release for your architecture.
