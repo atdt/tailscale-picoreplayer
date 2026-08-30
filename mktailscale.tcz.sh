@@ -5,10 +5,10 @@ set -e
 
 [ "$(id -u)" != 0 ] || { echo "run as tc, not root" >&2; exit 1; }
 
-case "$(uname -m)" in
-    aarch64)       ARCH=arm64 ;;
-    armv7l|armv6l) ARCH=arm   ;;
-    x86_64)        ARCH=amd64 ;;
+# Detects userspace binary format. aarch64 kernels can run a 32bit OS.
+case $(find /lib | grep ld-linux) in
+    *aarch64*) ARCH=arm64 ;;
+    *armhf*)   ARCH=arm   ;;
     *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;;
 esac
 
