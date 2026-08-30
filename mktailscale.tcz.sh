@@ -54,11 +54,13 @@ mkdir -p "$WORK/pkg/usr/local/bin" "$WORK/pkg/usr/local/etc/init.d" \
          "$WORK/pkg/usr/local/tce.installed" "$WORK/pkg/usr/local/share/tailscale"
 cd "$WORK"
 
+echo "Downloading https://pkgs.tailscale.com/stable/$TGZ"
 wget -q "https://pkgs.tailscale.com/stable/$TGZ"
 wget -q "https://pkgs.tailscale.com/stable/$TGZ.sha256"
 # Tailscale publishes a bare hash, not the "hash  filename" sha256sum -c expects.
 echo "$(awk '{print $1}' "$TGZ.sha256")  $TGZ" | sha256sum -c -
 
+echo "Extracting downloaded package"
 tar xzf "$TGZ"
 cp "tailscale_${VERSION}_${ARCH}/tailscale" \
    "tailscale_${VERSION}_${ARCH}/tailscaled" pkg/usr/local/bin/
@@ -68,6 +70,7 @@ install -m 0755 "$SELF" pkg/usr/local/bin/tailscale-installer
 
 # BSD-3-Clause requires binary redistributions to carry the notice, but the
 # upstream tarball has no license file.
+echo "Installing License from https://raw.githubusercontent.com/tailscale/tailscale/v$VERSION/LICENSE"
 wget -q -O pkg/usr/local/share/tailscale/LICENSE \
     "https://raw.githubusercontent.com/tailscale/tailscale/v$VERSION/LICENSE"
 
@@ -139,6 +142,7 @@ cat > pkg/usr/local/tce.installed/tailscale <<'EOF'
 #!/bin/sh
 /usr/local/etc/init.d/tailscaled start
 EOF
+
 # tce.installed dir and script have a requirement of root:staff owned 775 permissions
 sudo -E chown -R root:root pkg
 sudo -E chown -R root:staff pkg/usr/local/tce.installed
