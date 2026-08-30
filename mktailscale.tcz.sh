@@ -139,11 +139,15 @@ cat > pkg/usr/local/tce.installed/tailscale <<'EOF'
 #!/bin/sh
 /usr/local/etc/init.d/tailscaled start
 EOF
-chmod 0755 pkg/usr/local/tce.installed/tailscale
+# tce.installed dir and script have a requirement of root:staff owned 775 permissions
+sudo -E chown -R root:root pkg
+sudo -E chown -R root:staff pkg/usr/local/tce.installed
+sudo -E chmod -R 775 pkg/usr/local/tce.installed
 
-# Matches how the stock piCore extensions are built; -all-root because the
-# build runs as tc rather than root.
-mksquashfs pkg tailscale.tcz -b 4k -no-xattrs -all-root -noappend >/dev/null
+# Matches how the stock piCore extensions are built;
+#  -all-root will override the set permissions, so don't use.
+#  -Pi5 kernel requires 16k block size.
+mksquashfs pkg tailscale.tcz -b 16k -no-xattrs -noappend >/dev/null
 
 # The loaded extension is loop-mounted from this file, so it cannot be replaced
 # in place. tce-setup moves anything staged in optional/upgrade into optional/
@@ -186,8 +190,10 @@ tce-load -w ipv6-netfilter-KERNEL.tcz >/dev/null
 ONBOOT=$TCEDIR/onboot.lst
 grep -qx 'tailscale.tcz' "$ONBOOT" || echo 'tailscale.tcz' >> "$ONBOOT"
 
-cd /
-rm -rf "$WORK"
+cd /tmp
+echo "Removing Working Directory"
+# pkg directory is set to root, so we need sudo here.
+sudo rm -rf "$WORK"
 
 echo "Installed Tailscale $VERSION."
 if [ "$DEST" = "$TCEDIR/optional" ]; then
