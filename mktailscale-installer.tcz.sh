@@ -36,7 +36,8 @@ EOF
 cd "$WORK"
 # Matches how the stock piCore extensions are built; -all-root because the
 # build runs as tc rather than root.
-mksquashfs pkg "$NAME.tcz" -b 4k -no-xattrs -all-root -noappend >/dev/null
+# Pi5 kernel requires 16k block size.
+mksquashfs pkg "$NAME.tcz" -b 16k -no-xattrs -all-root -noappend >/dev/null
 
 install -m 0644 "$NAME.tcz" "$OUT/$NAME.tcz"
 md5sum "$NAME.tcz" > "$OUT/$NAME.tcz.md5.txt"
