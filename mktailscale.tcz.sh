@@ -120,9 +120,20 @@ case "$1" in
         echo "tun/netfilter unavailable, using userspace networking"
     fi
 
+    # tailscale.env, if present, sets environment variables for tailscaled and
+    # can override this default. It lives in tcedir, on the data partition, so
+    # it survives reboots and upgrades.
+    export TS_NO_LOGS_NO_SUPPORT=true
+    ENVFILE=$(readlink -f /etc/sysconfig/tcedir)/tailscale.env
+    if [ -f "$ENVFILE" ]; then
+        set -a
+        . "$ENVFILE"
+        set +a
+    fi
+
     start-stop-daemon --start --background --pidfile "$PIDFILE" --make-pidfile \
         --startas "$DAEMON" -- \
-        --statedir="$STATEDIR" --tun="$TUN" --no-logs-no-support
+        --statedir="$STATEDIR" --tun="$TUN"
     ;;
   stop)
     echo "Stopping tailscaled"

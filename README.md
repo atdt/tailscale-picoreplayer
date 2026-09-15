@@ -35,17 +35,6 @@ TAILSCALE_VERSION=1.102.1 ./mktailscale.tcz.sh
 
 <https://pkgs.tailscale.com/stable/> lists the current version.
 
-## Development
-
-Install [ShellCheck 0.11.0 or newer](https://www.shellcheck.net/), then enable
-BusyBox checks and the pre-commit hook:
-
-```sh
-make setup
-```
-
-Run the checks without changing Git configuration with `make check`.
-
 ## What it does
 
 * Downloads the current stable release for your architecture.
@@ -64,8 +53,36 @@ node identity up from wherever that recipe left it, so you keep the same tailnet
 IP without re-authenticating.
 
 The extension starts itself, so remove whatever used to start it or the daemon
-will run twice: the pCP user commands under Tweaks &rarr; User commands, and any
+will run twice: the pCP user commands under Tweaks → User commands, and any
 `tailscaled` lines in `/opt/bootlocal.sh`. Then run `pcp bu`.
+
+## Setting environment variables
+
+To set environment variables for `tailscaled`, create
+`/etc/sysconfig/tcedir/tailscale.env` with one `NAME=value` assignment per
+line, then restart `tailscaled` (or reboot). The variables may be interpreted
+by `tailscaled`, the
+[Go runtime](https://pkg.go.dev/runtime#hdr-Environment_Variables), or the
+operating system. For example:
+
+```sh
+GOMAXPROCS=1
+GOMEMLIMIT=128MiB
+```
+
+This file lives on the pCP data partition, so it survives reboots and
+upgrades without needing a pCP backup, the same as the node state.
+
+## Development
+
+Install [ShellCheck 0.11.0 or newer](https://www.shellcheck.net/), then enable
+BusyBox checks and the pre-commit hook:
+
+```sh
+make setup
+```
+
+Run the checks without changing Git configuration with `make check`.
 
 ## Packaging the script as an extension
 
